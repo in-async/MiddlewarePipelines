@@ -5,21 +5,15 @@ using System.Threading.Tasks;
 using Inasync;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Inasync.MiddlewarePipelines.Tests {
+namespace Inasync.OnionPipelines.Tests {
 
     [TestClass]
-    public class MiddlewarePipelineBuilderTests {
+    public class OnionFuncExtensionsTests {
 
         [TestMethod]
-        public void PipelineBuilder() {
-            new TestCaseRunner()
-                .Run(() => new MiddlewarePipelineBuilder<DummyContext, Task>())
-                .Verify((actual, _) => { }, (Type)null);
-        }
+        public void Wrap_ByMiddlewareNext() {
+            Func<DummyContext, Task> handler = _ => Task.CompletedTask;
 
-        [TestMethod]
-        public void Add() {
-            var pipeline = new MiddlewarePipelineBuilder<DummyContext, Task>();
             var invokedMiddleware = false;
             Func<Func<DummyContext, Task>, Func<DummyContext, Task>> middleware = next => {
                 invokedMiddleware = true;
@@ -27,36 +21,58 @@ namespace Inasync.MiddlewarePipelines.Tests {
             };
 
             new TestCaseRunner()
-              .Run(() => pipeline.Add(middleware))
+              .Run(() => OnionFuncExtensions.Wrap(handler, middleware))
               .Verify((actual, _) => {
-                  Assert.AreEqual(pipeline, actual, "戻り値の PipelineBuilder が同一インスタンスではありません。");
-
-                  pipeline.Build(__ => Task.CompletedTask);
                   Assert.IsTrue(invokedMiddleware, "ミドルウェアが呼ばれていません。");
               }, (Type)null);
         }
 
         [TestMethod]
-        public void Build() {
+        public void Wrap_ByMiddlewareFunc() {
+            var task = Task.FromResult(Rand.Int());
+            DummyContext actualHandlerContext = null;
+            Func<DummyContext, Task> handler = ctx => {
+                actualHandlerContext = ctx;
+                return task;
+            };
+
+            DummyContext actualMiddlewareContext = null;
+            MiddlewareFunc<DummyContext, Task> middlewareFunc = (context, next) => {
+                actualMiddlewareContext = context;
+                return next(context);
+            };
+
+            new TestCaseRunner()
+              .Run(() => OnionFuncExtensions.Wrap(handler, middlewareFunc))
+              .Verify((actual, _) => {
+                  var context = new DummyContext();
+                  var actualTask = actual(context);
+                  Assert.AreEqual(task, actualTask, "実行結果が期待値と異なります。");
+                  Assert.AreEqual(context, actualMiddlewareContext, "ミドルウェアの実行時コンテキストが異なります。");
+              }, (Type)null);
+        }
+
+        [TestMethod]
+        public void Wrap_and_Invoke() {
             {
                 var invokedFactories = new List<SpyComponent>();
                 var invokedComponents = new List<SpyComponent>();
                 var factory1 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
                 var factory2 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
                 var factory3 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
-                var pipeline = new MiddlewarePipelineBuilder<DummyContext, Task>()
-                    .Add(factory1.Create)
-                    .Add(factory2.Create)
-                    .Add(factory3.Create)
-                    ;
                 var task = Task.FromResult(Rand.Int());
                 var handler = new SpyHandler(invokedComponents, task);
+
                 var expectedTask = task;
                 var expectedFactories = new SpyComponent[] { factory3, factory2, factory1 };
                 var expectedComponents = new SpyComponent[] { factory1, factory2, factory3, handler };
 
                 new TestCaseRunner("middlewares 及び handler が順番通りに呼ばれる")
-                    .Run(() => pipeline.Build(handler.InvokeAsync))
+                    .Run(() => new Func<DummyContext, Task>(handler.InvokeAsync)
+                        .Wrap(factory3.Create)
+                        .Wrap(factory2.Create)
+                        .Wrap(factory1.Create)
+                    )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
                         var actualTask = actual(context);
@@ -75,18 +91,18 @@ namespace Inasync.MiddlewarePipelines.Tests {
                 var factory1 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
                 var factory2 = new SpyMiddlewareFactory(invokedFactories, invokedComponents, task2);
                 var factory3 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
-                var pipeline = new MiddlewarePipelineBuilder<DummyContext, Task>()
-                    .Add(factory1.Create)
-                    .Add(factory2.Create)
-                    .Add(factory3.Create)
-                    ;
                 var handler = new SpyHandler(invokedComponents, Task.FromResult(Rand.Int()));
+
                 var expectedTask = task2;
                 var expectedFactories = new SpyComponent[] { factory3, factory2, factory1 };
                 var expectedComponents = new SpyComponent[] { factory1, factory2 };
 
                 new TestCaseRunner("middleware2 でショートサーキット")
-                    .Run(() => pipeline.Build(handler.InvokeAsync))
+                    .Run(() => new Func<DummyContext, Task>(handler.InvokeAsync)
+                        .Wrap(factory3.Create)
+                        .Wrap(factory2.Create)
+                        .Wrap(factory1.Create)
+                    )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
                         var actualTask = actual(context);

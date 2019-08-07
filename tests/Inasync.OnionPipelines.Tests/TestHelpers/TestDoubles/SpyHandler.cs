@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Inasync.MiddlewarePipelines.Tests {
+namespace Inasync.OnionPipelines.Tests {
 
     public class SpyHandler : SpyComponent {
 

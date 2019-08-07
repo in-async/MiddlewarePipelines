@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.572
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inasync.MiddlewarePipelines", "src\Inasync.MiddlewarePipelines\Inasync.MiddlewarePipelines.csproj", "{1CB8D62B-A5EE-48C9-9259-056D36B5469A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inasync.OnionPipelines", "src\Inasync.OnionPipelines\Inasync.OnionPipelines.csproj", "{1CB8D62B-A5EE-48C9-9259-056D36B5469A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D4CD30E4-0B4E-47CE-93D4-0A75CC43FA66}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{602E721D-94B2-420B-AFC3-B652BFED3A5F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inasync.MiddlewarePipelines.Tests", "tests\Inasync.MiddlewarePipelines.Tests\Inasync.MiddlewarePipelines.Tests.csproj", "{787A8B78-8F93-4904-925A-63DD90ABA7B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Inasync.OnionPipelines.Tests", "tests\Inasync.OnionPipelines.Tests\Inasync.OnionPipelines.Tests.csproj", "{787A8B78-8F93-4904-925A-63DD90ABA7B6}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{3809A96C-627E-4192-AEA8-4855D6A46440}"
 	ProjectSection(SolutionItems) = preProject

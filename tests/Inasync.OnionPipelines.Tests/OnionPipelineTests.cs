@@ -5,15 +5,15 @@ using System.Threading.Tasks;
 using Inasync;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Inasync.MiddlewarePipelines.Tests {
+namespace Inasync.OnionPipelines.Tests {
 
     [TestClass]
-    public class MiddlewarePipelineTests {
+    public class OnionPipelineTests {
 
         [TestMethod]
         public void Build_HandlerIsNull() {
-            TestRun("by interfaces", () => MiddlewarePipeline.Build(new SpyMiddleware[0], null));
-            TestRun("by delegates", () => MiddlewarePipeline.Build(new MiddlewareFunc<DummyContext, Task>[0], null));
+            TestRun("by interfaces", () => OnionPipeline.Build(new SpyMiddleware[0], null));
+            TestRun("by delegates", () => OnionPipeline.Build(new MiddlewareFunc<DummyContext, Task>[0], null));
 
             void TestRun(string desc, Func<Func<DummyContext, Task>> targetCode) => new TestCaseRunner()
                 .Run(targetCode)
@@ -22,8 +22,8 @@ namespace Inasync.MiddlewarePipelines.Tests {
 
         [TestMethod]
         public void Build_MiddlewaresIsNull() {
-            TestRun("by interfaces", () => MiddlewarePipeline.Build((SpyMiddleware[])null, _ => Task.CompletedTask));
-            TestRun("by delegates", () => MiddlewarePipeline.Build((MiddlewareFunc<DummyContext, Task>[])null, _ => Task.CompletedTask));
+            TestRun("by interfaces", () => OnionPipeline.Build((SpyMiddleware[])null, _ => Task.CompletedTask));
+            TestRun("by delegates", () => OnionPipeline.Build((MiddlewareFunc<DummyContext, Task>[])null, _ => Task.CompletedTask));
 
             void TestRun(string desc, Func<Func<DummyContext, Task>> targetCode) => new TestCaseRunner()
                 .Run(targetCode)
@@ -34,8 +34,8 @@ namespace Inasync.MiddlewarePipelines.Tests {
         public void Build_MiddlewaresIsEmpty() {
             Func<DummyContext, Task> nullHandler = _ => Task.CompletedTask;
 
-            TestRun("by interfaces", () => MiddlewarePipeline.Build(new SpyMiddleware[0], nullHandler));
-            TestRun("by delegates", () => MiddlewarePipeline.Build(new MiddlewareFunc<DummyContext, Task>[0], nullHandler));
+            TestRun("by interfaces", () => OnionPipeline.Build(new SpyMiddleware[0], nullHandler));
+            TestRun("by delegates", () => OnionPipeline.Build(new MiddlewareFunc<DummyContext, Task>[0], nullHandler));
 
             void TestRun(string desc, Func<Func<DummyContext, Task>> targetCode) => new TestCaseRunner()
                 .Run(targetCode)
@@ -47,8 +47,8 @@ namespace Inasync.MiddlewarePipelines.Tests {
         [TestMethod]
         public void Build() {
             Action TestCase(int testNumber, Task[] middlewareTasks, Task handlerTask, (Task task, Func<SpyMiddleware[], SpyHandler, SpyComponent[]> components) expected) => () => {
-                TestRun($"No.{testNumber} by interfaces", (middlewares, handler) => MiddlewarePipeline.Build(middlewares, handler.InvokeAsync));
-                TestRun($"No.{testNumber} by delegates", (middlewares, handler) => MiddlewarePipeline.Build(middlewares.Select(m => m.Delegate), handler.InvokeAsync));
+                TestRun($"No.{testNumber} by interfaces", (middlewares, handler) => OnionPipeline.Build(middlewares, handler.InvokeAsync));
+                TestRun($"No.{testNumber} by delegates", (middlewares, handler) => OnionPipeline.Build(middlewares.Select(m => m.Delegate), handler.InvokeAsync));
 
                 void TestRun(string desc, Func<SpyMiddleware[], SpyHandler, Func<DummyContext, Task>> targetCode) {
                     var invokedComponents = new List<SpyComponent>();
@@ -84,9 +84,9 @@ namespace Inasync.MiddlewarePipelines.Tests {
             public SpyMiddleware(List<SpyComponent> invokedComponents, Task result = null) : base(invokedComponents, result) {
             }
 
-            public MiddlewareFunc<DummyContext, Task> Delegate => InvokeAsync;
+            public MiddlewareFunc<DummyContext, Task> Delegate => Invoke;
 
-            public Task InvokeAsync(DummyContext context, Func<DummyContext, Task> next) => InvokeAsync(context) ?? next(context);
+            public Task Invoke(DummyContext context, Func<DummyContext, Task> next) => InvokeAsync(context) ?? next(context);
         }
 
         #endregion Helpers
