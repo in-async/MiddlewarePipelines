@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Inasync;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -12,72 +11,113 @@ namespace Inasync.OnionPipelines.Tests {
 
         [TestMethod]
         public void Wrap_ByMiddlewareNext() {
-            Func<DummyContext, Task> handler = _ => Task.CompletedTask;
+            {
+                Action TestCase(int testNumber, Func<DummyContext, DummyResult> handler, Func<Func<DummyContext, DummyResult>, Func<DummyContext, DummyResult>> middleware, Type expectedExceptionType = null) => () => {
+                    new TestCaseRunner()
+                      .Run(() => OnionFuncExtensions.Wrap(handler, middleware))
+                      .Verify((actual, desc) => { }, expectedExceptionType);
+                };
 
-            var invokedMiddleware = false;
-            Func<Func<DummyContext, Task>, Func<DummyContext, Task>> middleware = next => {
-                invokedMiddleware = true;
-                return next;
-            };
+                new[]{
+                    TestCase( 0, handler:null        , middleware:_ => default, typeof(ArgumentNullException)),
+                    TestCase( 1, handler:_ => default, middleware:null        , typeof(ArgumentNullException)),
+                    TestCase( 2, handler:_ => default, middleware:_ => default),
+                }.Run();
+            }
+            {
+                Func<DummyContext, DummyResult> handler = _ => new DummyResult();
 
-            new TestCaseRunner()
-              .Run(() => OnionFuncExtensions.Wrap(handler, middleware))
-              .Verify((actual, _) => {
-                  Assert.IsTrue(invokedMiddleware, "ミドルウェアが呼ばれていません。");
-              }, (Type)null);
+                Func<DummyContext, DummyResult> actualNext = null;
+                Func<Func<DummyContext, DummyResult>, Func<DummyContext, DummyResult>> middleware = next => {
+                    actualNext = next;
+                    return next;
+                };
+
+                new TestCaseRunner()
+                  .Run(() => OnionFuncExtensions.Wrap(handler, middleware))
+                  .Verify((actual, desc) => {
+                      Assert.AreEqual(actual, handler, desc);
+                      Assert.AreEqual(actualNext, handler, desc);
+                  }, (Type)null);
+            }
         }
 
         [TestMethod]
         public void Wrap_ByMiddlewareFunc() {
-            var task = Task.FromResult(Rand.Int());
-            DummyContext actualHandlerContext = null;
-            Func<DummyContext, Task> handler = ctx => {
-                actualHandlerContext = ctx;
-                return task;
+            var middlewareResult = new DummyResult();
+
+            Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
+                new TestCaseRunner()
+                    .Run(() => OnionFuncExtensions.Wrap(_handler, _middleware?.Delegate))
+                    .Verify((actual, desc) => {
+                        var context = new DummyContext();
+                        var actualResult = actual(context);
+
+                        Assert.AreEqual(middlewareResult, actualResult, desc);
+                        Assert.AreEqual((context, _handler), _middleware.ActualParams, desc);
+                    }, expectedExceptionType);
             };
 
-            DummyContext actualMiddlewareContext = null;
-            MiddlewareFunc<DummyContext, Task> middlewareFunc = (context, next) => {
-                actualMiddlewareContext = context;
-                return next(context);
-            };
-
-            new TestCaseRunner()
-              .Run(() => OnionFuncExtensions.Wrap(handler, middlewareFunc))
-              .Verify((actual, _) => {
-                  var context = new DummyContext();
-                  var actualTask = actual(context);
-                  Assert.AreEqual(task, actualTask, "実行結果が期待値と異なります。");
-                  Assert.AreEqual(context, actualMiddlewareContext, "ミドルウェアの実行時コンテキストが異なります。");
-              }, (Type)null);
+            Func<DummyContext, DummyResult> handler = _ => new DummyResult();
+            var middleware = new SpyMiddleware(middlewareResult);
+            new[]{
+                TestCase( 0, null   , middleware, typeof(ArgumentNullException)),
+                TestCase( 1, handler, null      , typeof(ArgumentNullException)),
+                TestCase( 2, handler, middleware),
+            }.Run();
         }
 
         [TestMethod]
-        public void Wrap_and_Invoke() {
+        public void Wrap_ByMiddlewareInterface() {
+            var middlewareResult = new DummyResult();
+
+            Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
+                new TestCaseRunner()
+                    .Run(() => OnionFuncExtensions.Wrap(_handler, _middleware))
+                    .Verify((actual, desc) => {
+                        var context = new DummyContext();
+                        var actualResult = actual(context);
+
+                        Assert.AreEqual(middlewareResult, actualResult, desc);
+                        Assert.AreEqual((context, _handler), _middleware.ActualParams, desc);
+                    }, expectedExceptionType);
+            };
+
+            Func<DummyContext, DummyResult> handler = _ => new DummyResult();
+            var middleware = new SpyMiddleware(middlewareResult);
+            new[]{
+                TestCase( 0, null   , middleware, typeof(ArgumentNullException)),
+                TestCase( 1, handler, null      , typeof(ArgumentNullException)),
+                TestCase( 2, handler, middleware),
+            }.Run();
+        }
+
+        [TestMethod]
+        public void Wraps_and_Invoke() {
             {
                 var invokedFactories = new List<SpyComponent>();
                 var invokedComponents = new List<SpyComponent>();
                 var factory1 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
                 var factory2 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
                 var factory3 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
-                var task = Task.FromResult(Rand.Int());
-                var handler = new SpyHandler(invokedComponents, task);
+                var handlerResult = new DummyResult();
+                var handler = new SpyHandler(invokedComponents, handlerResult);
 
-                var expectedTask = task;
-                var expectedFactories = new SpyComponent[] { factory3, factory2, factory1 };
-                var expectedComponents = new SpyComponent[] { factory1, factory2, factory3, handler };
+                var expectedResult = handlerResult;
+                var expectedFactories = new SpyComponent[] { factory1, factory2, factory3 };
+                var expectedComponents = new SpyComponent[] { factory3, factory2, factory1, handler };
 
                 new TestCaseRunner("middlewares 及び handler が順番通りに呼ばれる")
-                    .Run(() => new Func<DummyContext, Task>(handler.InvokeAsync)
-                        .Wrap(factory3.Create)
-                        .Wrap(factory2.Create)
+                    .Run(() => new Func<DummyContext, DummyResult>(handler.Invoke)
                         .Wrap(factory1.Create)
+                        .Wrap(factory2.Create)
+                        .Wrap(factory3.Create)
                     )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
-                        var actualTask = actual(context);
+                        var actualResult = actual(context);
 
-                        Assert.AreEqual(expectedTask, actualTask, desc);
+                        Assert.AreEqual(expectedResult, actualResult, desc);
                         CollectionAssert.AreEqual(expectedFactories, invokedFactories, $"{desc}: ファクトリーの呼び出し順序が一致しません。");
                         CollectionAssert.AreEqual(expectedComponents, invokedComponents, $"{desc}: コンポーネントの実行順序が一致しません。");
                         Assert.IsTrue(invokedComponents.All(x => x.ActualContext == context), desc);
@@ -87,27 +127,27 @@ namespace Inasync.OnionPipelines.Tests {
             {
                 var invokedFactories = new List<SpyComponent>();
                 var invokedComponents = new List<SpyComponent>();
-                var task2 = Task.FromResult(Rand.Int());
+                var result2 = new DummyResult();
                 var factory1 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
-                var factory2 = new SpyMiddlewareFactory(invokedFactories, invokedComponents, task2);
+                var factory2 = new SpyMiddlewareFactory(invokedFactories, invokedComponents, result2);
                 var factory3 = new SpyMiddlewareFactory(invokedFactories, invokedComponents);
-                var handler = new SpyHandler(invokedComponents, Task.FromResult(Rand.Int()));
+                var handler = new SpyHandler(invokedComponents, new DummyResult());
 
-                var expectedTask = task2;
-                var expectedFactories = new SpyComponent[] { factory3, factory2, factory1 };
-                var expectedComponents = new SpyComponent[] { factory1, factory2 };
+                var expectedResult = result2;
+                var expectedFactories = new SpyComponent[] { factory1, factory2, factory3 };
+                var expectedComponents = new SpyComponent[] { factory3, factory2 };
 
                 new TestCaseRunner("middleware2 でショートサーキット")
-                    .Run(() => new Func<DummyContext, Task>(handler.InvokeAsync)
-                        .Wrap(factory3.Create)
-                        .Wrap(factory2.Create)
+                    .Run(() => new Func<DummyContext, DummyResult>(handler.Invoke)
                         .Wrap(factory1.Create)
+                        .Wrap(factory2.Create)
+                        .Wrap(factory3.Create)
                     )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
-                        var actualTask = actual(context);
+                        var actualResult = actual(context);
 
-                        Assert.AreEqual(expectedTask, actualTask, desc);
+                        Assert.AreEqual(expectedResult, actualResult, desc);
                         CollectionAssert.AreEqual(expectedFactories, invokedFactories, $"{desc}: ファクトリーの呼び出し順序が一致しません。");
                         CollectionAssert.AreEqual(expectedComponents, invokedComponents, $"{desc}: コンポーネントの実行順序が一致しません。");
                         Assert.IsTrue(invokedComponents.All(x => x.ActualContext == context), desc);
@@ -117,16 +157,30 @@ namespace Inasync.OnionPipelines.Tests {
 
         #region Helpers
 
+        private sealed class SpyMiddleware : IMiddleware<DummyContext, DummyResult> {
+            private readonly DummyResult _result;
+
+            public SpyMiddleware(DummyResult result) => _result = result;
+
+            public MiddlewareFunc<DummyContext, DummyResult> Delegate => Invoke;
+            public (DummyContext context, Func<DummyContext, DummyResult> next) ActualParams { get; private set; }
+
+            public DummyResult Invoke(DummyContext context, Func<DummyContext, DummyResult> next) {
+                ActualParams = (context, next);
+                return _result;
+            }
+        }
+
         private class SpyMiddlewareFactory : SpyComponent {
             private readonly List<SpyComponent> _invokedFactories;
 
-            public SpyMiddlewareFactory(List<SpyComponent> invokedFactories, List<SpyComponent> invokedComponents, Task result = null) : base(invokedComponents, result) {
+            public SpyMiddlewareFactory(List<SpyComponent> invokedFactories, List<SpyComponent> invokedComponents, DummyResult result = null) : base(invokedComponents, result) {
                 _invokedFactories = invokedFactories;
             }
 
-            public Func<DummyContext, Task> Create(Func<DummyContext, Task> next) {
+            public Func<DummyContext, DummyResult> Create(Func<DummyContext, DummyResult> next) {
                 _invokedFactories.Add(this);
-                return context => InvokeAsync(context) ?? next(context);
+                return context => Invoke(context) ?? next(context);
             }
         }
 

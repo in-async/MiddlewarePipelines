@@ -18,7 +18,7 @@ namespace Inasync.OnionPipelines {
             return context => middleware(context, onionFunc);
         }
 
-        public static Func<TContext, TTask> Wrap<TContext, TTask>(this Func<TContext, TTask> onionFunc, IMiddleware<TContext, TTask> middleware) {
+        public static Func<TContext, TResult> Wrap<TContext, TResult>(this Func<TContext, TResult> onionFunc, IMiddleware<TContext, TResult> middleware) {
             if (onionFunc == null) { throw new ArgumentNullException(nameof(onionFunc)); }
             if (middleware == null) { throw new ArgumentNullException(nameof(middleware)); }
 
