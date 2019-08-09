@@ -1,4 +1,4 @@
-﻿namespace Inasync.OnionPipelines.Tests {
+﻿namespace Inasync.OnionFunc.Tests {
 
     public sealed class DummyContext { }
 

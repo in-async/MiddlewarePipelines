@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-namespace Inasync.OnionPipelines {
+namespace Inasync.OnionFunc {
 
     /// <summary>
     /// オニオン パイプラインに関するヘルパー クラス。

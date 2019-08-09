@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Inasync.OnionPipelines.Tests {
+namespace Inasync.OnionFunc.Tests {
 
     public abstract class SpyComponent {
         private readonly List<SpyComponent> _invokedComponents;

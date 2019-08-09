@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Inasync.OnionPipelines.Tests {
+namespace Inasync.OnionFunc.Tests {
 
     [TestClass]
     public class UsageTest {

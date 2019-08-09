@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Inasync.OnionPipelines {
+namespace Inasync.OnionFunc {
 
-    internal static class OnionFuncExtensions {
+    public static class OnionFuncExtensions {
 
         public static Func<TContext, TResult> Wrap<TContext, TResult>(this Func<TContext, TResult> onionFunc, Func<Func<TContext, TResult>, Func<TContext, TResult>> middleware) {
             if (onionFunc == null) { throw new ArgumentNullException(nameof(onionFunc)); }

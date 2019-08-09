@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Inasync.OnionPipelines {
+namespace Inasync.OnionFunc {
 
     /// <summary>
     /// オニオン パイプラインを構成するミドルウェア コンポーネント インターフェース。

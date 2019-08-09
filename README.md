@@ -1,8 +1,8 @@
-# OnionPipelines
-[![Build status](https://ci.appveyor.com/api/projects/status/yrwpc36qmfpf1k4n/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/onionpipelines/branch/master)
-[![NuGet](https://img.shields.io/nuget/v/Inasync.OnionPipelines.svg)](https://www.nuget.org/packages/Inasync.OnionPipelines/)
+# OnionFunc
+[![Build status](https://ci.appveyor.com/api/projects/status/yrwpc36qmfpf1k4n/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/onionfunc/branch/master)
+[![NuGet](https://img.shields.io/nuget/v/Inasync.OnionFunc.svg)](https://www.nuget.org/packages/Inasync.OnionFunc/)
 
-***OnionPipelines*** は、特定のドメインに依存せずに middleware pattern を実装する為のシンプルな .NET ライブラリです。
+***OnionFunc*** は middleware pattern を実装する為のスーパーシンプルな .NET ライブラリです。
 
 
 ## Target Frameworks
