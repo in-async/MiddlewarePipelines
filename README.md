@@ -2,7 +2,9 @@
 [![Build status](https://ci.appveyor.com/api/projects/status/yrwpc36qmfpf1k4n/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/onionfunc/branch/master)
 [![NuGet](https://img.shields.io/nuget/v/Inasync.OnionFunc.svg)](https://www.nuget.org/packages/Inasync.OnionFunc/)
 
-***OnionFunc*** は middleware pattern を実装する為のスーパーシンプルな .NET ライブラリです。
+***OnionFunc*** は、関数に別の処理をラッピングするヘルパーを提供するだけの、スーパーシンプルな .NET ライブラリです。
+
+これによって middleware pattern によるパイプラインの構築を簡単にします。
 
 
 ## Target Frameworks
@@ -13,14 +15,14 @@
 
 ## Usage
 ```cs
-Func<decimal, decimal> handler = price => price;
-Assert.AreEqual(1_000, handler(1_000));
+Func<string, string> handler = value => value + "|";
+Assert.AreEqual(">|", handler(">"));
 
-Func<decimal, decimal> pipeline = handler
-    .Wrap((price, next) => next(price - 200))
-    .Wrap((price, next) => next(price * (1 - 0.3m)))
+Func<string, string> pipeline = handler
+    .Wrap((value, next) => next(value + "b") + "B")
+    .Wrap((value, next) => next(value + "a") + "A")
     ;
-Assert.AreEqual(500, pipeline(1_000));
+Assert.AreEqual(">ab|BA", pipeline(">"));
 ```
 
 

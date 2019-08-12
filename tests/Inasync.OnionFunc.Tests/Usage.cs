@@ -8,14 +8,14 @@ namespace Inasync.OnionFunc.Tests {
 
         [TestMethod]
         public void Usage_Readme() {
-            Func<decimal, decimal> handler = price => price;
-            Assert.AreEqual(1_000, handler(1_000));
+            Func<string, string> handler = context => context + "|";
+            Assert.AreEqual(">|", handler(">"));
 
-            Func<decimal, decimal> pipeline = handler
-                .Wrap((price, next) => next(price - 200))
-                .Wrap((price, next) => next(price * (1 - 0.3m)))
+            Func<string, string> pipeline = handler
+                .Wrap((context, next) => next(context + "b") + "B")
+                .Wrap((context, next) => next(context + "a") + "A")
                 ;
-            Assert.AreEqual(500, pipeline(1_000));
+            Assert.AreEqual(">ab|BA", pipeline(">"));
         }
 
         [TestMethod]
