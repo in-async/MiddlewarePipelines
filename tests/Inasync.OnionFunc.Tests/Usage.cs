@@ -8,14 +8,15 @@ namespace Inasync.OnionFunc.Tests {
 
         [TestMethod]
         public void Usage_Readme() {
-            Func<string, string> handler = context => context + "|";
-            Assert.AreEqual(">|", handler(">"));
+            Func<int, bool> handler = num => true;
+            Assert.AreEqual(true, handler(24));
 
-            Func<string, string> pipeline = handler
-                .Wrap((context, next) => next(context + "b") + "B")
-                .Wrap((context, next) => next(context + "a") + "A")
+            Func<int, bool> pipeline = handler
+                .Wrap(next => num => (num % 3 == 0) && next(num))
+                .Wrap(next => num => (num % 4 == 0) && next(num))
                 ;
-            Assert.AreEqual(">ab|BA", pipeline(">"));
+            Assert.AreEqual(true, pipeline(24));
+            Assert.AreEqual(false, pipeline(30));
         }
 
         [TestMethod]
@@ -24,21 +25,21 @@ namespace Inasync.OnionFunc.Tests {
             Assert.AreEqual(10_000, handler(10_000));
 
             Func<decimal, decimal> pipeline = handler
-                .Wrap((price, next) => {
+                .Wrap(next => price => {
                     Assert.AreEqual(4_200, price);
 
                     var nextPrice = next(price * (1 - .50m));
                     Assert.AreEqual(2_100, nextPrice);
                     return nextPrice;
                 })
-                .Wrap((price, next) => {
+                .Wrap(next => price => {
                     Assert.AreEqual(7_000, price);
 
                     var nextPrice = next(price * (1 - .40m));
                     Assert.AreEqual(2_100, nextPrice);
                     return nextPrice;
                 })
-                .Wrap((price, next) => {
+                .Wrap(next => price => {
                     Assert.AreEqual(10_000, price);
 
                     var nextPrice = next(price * (1 - .30m));
