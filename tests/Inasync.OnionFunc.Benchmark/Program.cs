@@ -22,7 +22,7 @@ namespace Inasync.OnionFunc.Benchmark {
         public BenchmarkConfig() {
             // Jobs
             Add(Job.Core);
-            Add(Job.Clr);
+            //Add(Job.Clr);
             //Add(Job.ShortRun.WithWarmupCount(1).WithIterationCount(1).With(Runtime.Core).With(Jit.RyuJit).With(Platform.X64));
 
             // Columns
