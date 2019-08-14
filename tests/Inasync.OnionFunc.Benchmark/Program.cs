@@ -4,7 +4,6 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Jobs;
@@ -88,5 +87,12 @@ namespace Inasync.OnionFunc.Benchmark {
 
         [BenchmarkCategory("Run"), Benchmark]
         public Task Run_ByContextAndNext() => _pipelineByContextAndNext(null);
+    }
+
+    internal static class OnionFuncExtensions {
+
+        public static Func<T, TResult> Wrap<T, TResult>(this Func<T, TResult> onionFunc, Func<T, Func<T, TResult>, TResult> middleware) {
+            return context => middleware(context, onionFunc);
+        }
     }
 }

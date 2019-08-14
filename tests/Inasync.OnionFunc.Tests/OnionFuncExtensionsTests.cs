@@ -10,51 +10,15 @@ namespace Inasync.OnionFunc.Tests {
     public class OnionFuncExtensionsTests {
 
         [TestMethod]
-        public void Wrap_ByMiddlewareNext() {
-            {
-                Action TestCase(int testNumber, Func<DummyContext, DummyResult> handler, Func<Func<DummyContext, DummyResult>, Func<DummyContext, DummyResult>> middleware, Type expectedExceptionType = null) => () => {
-                    new TestCaseRunner()
-                      .Run(() => OnionFuncExtensions.Wrap(handler, middleware))
-                      .Verify((actual, desc) => { }, expectedExceptionType);
-                };
-
-                new[]{
-                    TestCase( 0, handler:null        , middleware:_ => default, typeof(ArgumentNullException)),
-                    TestCase( 1, handler:_ => default, middleware:null        , typeof(ArgumentNullException)),
-                    TestCase( 2, handler:_ => default, middleware:_ => default),
-                }.Run();
-            }
-            {
-                Func<DummyContext, DummyResult> handler = _ => new DummyResult();
-
-                Func<DummyContext, DummyResult> actualNext = null;
-                Func<Func<DummyContext, DummyResult>, Func<DummyContext, DummyResult>> middleware = next => {
-                    actualNext = next;
-                    return next;
-                };
-
-                new TestCaseRunner()
-                  .Run(() => OnionFuncExtensions.Wrap(handler, middleware))
-                  .Verify((actual, desc) => {
-                      Assert.AreEqual(actual, handler, desc);
-                      Assert.AreEqual(actualNext, handler, desc);
-                  }, (Type)null);
-            }
-        }
-
-        [TestMethod]
         public void Wrap_ByMiddlewareFunc() {
-            var middlewareResult = new DummyResult();
+            Func<DummyContext, DummyResult> middlewareResult = context => new DummyResult();
 
             Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
                 new TestCaseRunner()
                     .Run(() => OnionFuncExtensions.Wrap(_handler, _middleware?.Delegate))
                     .Verify((actual, desc) => {
-                        var context = new DummyContext();
-                        var actualResult = actual(context);
-
-                        Assert.AreEqual(middlewareResult, actualResult, desc);
-                        Assert.AreEqual((context, _handler), _middleware.ActualParams, desc);
+                        Assert.AreEqual(middlewareResult, actual, desc);
+                        Assert.AreEqual(_handler, _middleware.ActualNext, desc);
                     }, expectedExceptionType);
             };
 
@@ -69,17 +33,14 @@ namespace Inasync.OnionFunc.Tests {
 
         [TestMethod]
         public void Wrap_ByMiddlewareInterface() {
-            var middlewareResult = new DummyResult();
+            Func<DummyContext, DummyResult> middlewareResult = context => new DummyResult();
 
             Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
                 new TestCaseRunner()
                     .Run(() => OnionFuncExtensions.Wrap(_handler, _middleware))
                     .Verify((actual, desc) => {
-                        var context = new DummyContext();
-                        var actualResult = actual(context);
-
-                        Assert.AreEqual(middlewareResult, actualResult, desc);
-                        Assert.AreEqual((context, _handler), _middleware.ActualParams, desc);
+                        Assert.AreEqual(middlewareResult, actual, desc);
+                        Assert.AreEqual(_handler, _middleware.ActualNext, desc);
                     }, expectedExceptionType);
             };
 
@@ -158,15 +119,15 @@ namespace Inasync.OnionFunc.Tests {
         #region Helpers
 
         private sealed class SpyMiddleware : IMiddleware<DummyContext, DummyResult> {
-            private readonly DummyResult _result;
+            private readonly Func<DummyContext, DummyResult> _result;
 
-            public SpyMiddleware(DummyResult result) => _result = result;
+            public SpyMiddleware(Func<DummyContext, DummyResult> result) => _result = result;
 
             public MiddlewareFunc<DummyContext, DummyResult> Delegate => Invoke;
-            public (DummyContext context, Func<DummyContext, DummyResult> next) ActualParams { get; private set; }
+            public Func<DummyContext, DummyResult> ActualNext { get; private set; }
 
-            public DummyResult Invoke(DummyContext context, Func<DummyContext, DummyResult> next) {
-                ActualParams = (context, next);
+            public Func<DummyContext, DummyResult> Invoke(Func<DummyContext, DummyResult> next) {
+                ActualNext = next;
                 return _result;
             }
         }
