@@ -4,7 +4,9 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Exporters.Csv;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 
@@ -12,33 +14,42 @@ namespace Inasync.OnionFunc.Benchmark {
 
     internal class Program {
 
-        private static void Main(string[] args) {
-            var config = ManualConfig.Create(DefaultConfig.Instance)
-                //.With(RPlotExporter.Default)
-                .With(MarkdownExporter.GitHub)
-                .With(MemoryDiagnoser.Default)
-                //.With(StatisticColumn.Min)
-                //.With(StatisticColumn.Max)
-                //.With(RankColumn.Arabic)
-                .With(Job.Core)
-                //.With(Job.Clr)
-                //.With(Job.ShortRun)
-                //.With(Job.ShortRun.With(BenchmarkDotNet.Environments.Platform.X64).WithWarmupCount(1).WithIterationCount(1))
-                .WithArtifactsPath(null)
-                ;
+        private static void Main(string[] args) => BenchmarkRunner.Run<OnionFuncBenchmark>();
+    }
 
-            BenchmarkRunner.Run<Benchmark>(config);
+    internal class BenchmarkConfig : ManualConfig {
+
+        public BenchmarkConfig() {
+            // Jobs
+            Add(Job.Core);
+            Add(Job.Clr);
+            //Add(Job.ShortRun.WithWarmupCount(1).WithIterationCount(1).With(Runtime.Core).With(Jit.RyuJit).With(Platform.X64));
+
+            // Columns
+            Add(MemoryDiagnoser.Default);
+            //Add(StatisticColumn.Min);
+            //Add(StatisticColumn.Max);
+            //Add(RankColumn.Arabic);
+
+            // Exporters
+            Add(MarkdownExporter.GitHub);
+            Add(CsvExporter.Default);
+            //Add(RPlotExporter.Default);
         }
     }
 
-    [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
-    [CategoriesColumn]
-    public class Benchmark {
+    [Config(typeof(BenchmarkConfig))]
+    [CategoriesColumn, GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
+    public class OnionFuncBenchmark {
         private readonly Func<object, Task> _handler = context => Task.CompletedTask;
-        private readonly Func<object, Task> _pipelineByNext;
-        private readonly Func<object, Task> _pipelineByContextAndNext;
+        private Func<object, Task> _pipelineByNext;
+        private Func<object, Task> _pipelineByContextAndNext;
 
-        public Benchmark() {
+        [Params(0, 1, 10, 100)]
+        public int Wraps { get; set; }
+
+        [GlobalSetup]
+        public void Setup() {
             _pipelineByNext = _handler;
             for (var i = 0; i < Wraps; i++) {
                 _pipelineByNext = _pipelineByNext.Wrap(next => context => next(context));
@@ -49,9 +60,6 @@ namespace Inasync.OnionFunc.Benchmark {
                 _pipelineByContextAndNext = _pipelineByContextAndNext.Wrap((context, next) => next(context));
             }
         }
-
-        [Params(0, 1, 10, 100)]
-        public int Wraps { get; set; }
 
         [BenchmarkCategory("Build"), Benchmark(Baseline = true)]
         public Func<object, Task> Build_ByNext() {
