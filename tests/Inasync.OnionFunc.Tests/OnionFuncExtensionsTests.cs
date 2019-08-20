@@ -10,12 +10,12 @@ namespace Inasync.OnionFunc.Tests {
     public class OnionFuncExtensionsTests {
 
         [TestMethod]
-        public void Wrap_ByMiddlewareFunc() {
+        public void Wear_ByMiddlewareFunc() {
             Func<DummyContext, DummyResult> middlewareResult = context => new DummyResult();
 
             Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
                 new TestCaseRunner()
-                    .Run(() => OnionFuncExtensions.Wrap(_handler, _middleware?.Delegate))
+                    .Run(() => OnionFuncExtensions.Wear(_handler, _middleware?.Delegate))
                     .Verify((actual, desc) => {
                         Assert.AreEqual(middlewareResult, actual, desc);
                         Assert.AreEqual(_handler, _middleware.ActualNext, desc);
@@ -32,12 +32,12 @@ namespace Inasync.OnionFunc.Tests {
         }
 
         [TestMethod]
-        public void Wrap_ByMiddlewareInterface() {
+        public void Wear_ByMiddlewareInterface() {
             Func<DummyContext, DummyResult> middlewareResult = context => new DummyResult();
 
             Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
                 new TestCaseRunner()
-                    .Run(() => OnionFuncExtensions.Wrap(_handler, _middleware))
+                    .Run(() => OnionFuncExtensions.Wear(_handler, _middleware))
                     .Verify((actual, desc) => {
                         Assert.AreEqual(middlewareResult, actual, desc);
                         Assert.AreEqual(_handler, _middleware.ActualNext, desc);
@@ -54,7 +54,7 @@ namespace Inasync.OnionFunc.Tests {
         }
 
         [TestMethod]
-        public void Wraps_and_Invoke() {
+        public void Wears_and_Invoke() {
             {
                 var invokedFactories = new List<SpyComponent>();
                 var invokedComponents = new List<SpyComponent>();
@@ -70,9 +70,9 @@ namespace Inasync.OnionFunc.Tests {
 
                 new TestCaseRunner("middlewares 及び handler が順番通りに呼ばれる")
                     .Run(() => new Func<DummyContext, DummyResult>(handler.Invoke)
-                        .Wrap(factory1.Create)
-                        .Wrap(factory2.Create)
-                        .Wrap(factory3.Create)
+                        .Wear(factory1.Create)
+                        .Wear(factory2.Create)
+                        .Wear(factory3.Create)
                     )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
@@ -100,9 +100,9 @@ namespace Inasync.OnionFunc.Tests {
 
                 new TestCaseRunner("middleware2 でショートサーキット")
                     .Run(() => new Func<DummyContext, DummyResult>(handler.Invoke)
-                        .Wrap(factory1.Create)
-                        .Wrap(factory2.Create)
-                        .Wrap(factory3.Create)
+                        .Wear(factory1.Create)
+                        .Wear(factory2.Create)
+                        .Wear(factory3.Create)
                     )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();

@@ -4,10 +4,10 @@
     <TargetFrameworks>netstandard2.0;netstandard1.0;net45</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>inasync</Authors>
-    <Description>OnionFunc is a super simple .NET library for implementing middleware patterns.</Description>
+    <Description>OnionFunc is a super simple .NET helper library for building pipelines with middleware patterns.</Description>
     <PackageProjectUrl>https://github.com/in-async/OnionFunc</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/in-async/OnionFunc/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageTags>library</PackageTags>
+    <PackageTags>library middleware pipeline</PackageTags>
     <Version>0.9.0</Version>
   </PropertyGroup>
 

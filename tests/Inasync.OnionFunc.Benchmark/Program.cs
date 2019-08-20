@@ -45,18 +45,18 @@ namespace Inasync.OnionFunc.Benchmark {
         private Func<object, Task> _pipelineByContextAndNext;
 
         [Params(0, 1, 10, 100)]
-        public int Wraps { get; set; }
+        public int Wears { get; set; }
 
         [GlobalSetup]
         public void Setup() {
             _pipelineByNext = _handler;
-            for (var i = 0; i < Wraps; i++) {
-                _pipelineByNext = _pipelineByNext.Wrap(next => context => next(context));
+            for (var i = 0; i < Wears; i++) {
+                _pipelineByNext = _pipelineByNext.Wear(next => context => next(context));
             }
 
             _pipelineByContextAndNext = _handler;
-            for (var i = 0; i < Wraps; i++) {
-                _pipelineByContextAndNext = _pipelineByContextAndNext.Wrap((context, next) => next(context));
+            for (var i = 0; i < Wears; i++) {
+                _pipelineByContextAndNext = _pipelineByContextAndNext.Wear((context, next) => next(context));
             }
         }
 
@@ -64,8 +64,8 @@ namespace Inasync.OnionFunc.Benchmark {
         public Func<object, Task> Build_ByNext() {
             Func<object, Task> pipeline = _handler;
 
-            for (var i = 0; i < Wraps; i++) {
-                pipeline = pipeline.Wrap(next => context => next(context));
+            for (var i = 0; i < Wears; i++) {
+                pipeline = pipeline.Wear(next => context => next(context));
             }
 
             return pipeline;
@@ -75,8 +75,8 @@ namespace Inasync.OnionFunc.Benchmark {
         public Func<object, Task> Build_ByContextAndNext() {
             Func<object, Task> pipeline = _handler;
 
-            for (var i = 0; i < Wraps; i++) {
-                pipeline = pipeline.Wrap((context, next) => next(context));
+            for (var i = 0; i < Wears; i++) {
+                pipeline = pipeline.Wear((context, next) => next(context));
             }
 
             return pipeline;
@@ -91,7 +91,7 @@ namespace Inasync.OnionFunc.Benchmark {
 
     internal static class OnionFuncExtensions {
 
-        public static Func<T, TResult> Wrap<T, TResult>(this Func<T, TResult> onionFunc, Func<T, Func<T, TResult>, TResult> middleware) {
+        public static Func<T, TResult> Wear<T, TResult>(this Func<T, TResult> onionFunc, Func<T, Func<T, TResult>, TResult> middleware) {
             return context => middleware(context, onionFunc);
         }
     }

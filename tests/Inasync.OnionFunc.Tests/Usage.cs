@@ -12,8 +12,8 @@ namespace Inasync.OnionFunc.Tests {
             Assert.AreEqual(true, handler(24));
 
             Func<int, bool> pipeline = handler
-                .Wrap(next => num => (num % 3 == 0) && next(num))
-                .Wrap(next => num => (num % 4 == 0) && next(num))
+                .Wear(next => num => (num % 3 == 0) && next(num))
+                .Wear(next => num => (num % 4 == 0) && next(num))
                 ;
             Assert.AreEqual(true, pipeline(24));
             Assert.AreEqual(false, pipeline(30));
@@ -25,21 +25,21 @@ namespace Inasync.OnionFunc.Tests {
             Assert.AreEqual(10_000, handler(10_000));
 
             Func<decimal, decimal> pipeline = handler
-                .Wrap(next => price => {
+                .Wear(next => price => {
                     Assert.AreEqual(4_200, price);
 
                     var nextPrice = next(price * (1 - .50m));
                     Assert.AreEqual(2_100, nextPrice);
                     return nextPrice;
                 })
-                .Wrap(next => price => {
+                .Wear(next => price => {
                     Assert.AreEqual(7_000, price);
 
                     var nextPrice = next(price * (1 - .40m));
                     Assert.AreEqual(2_100, nextPrice);
                     return nextPrice;
                 })
-                .Wrap(next => price => {
+                .Wear(next => price => {
                     Assert.AreEqual(10_000, price);
 
                     var nextPrice = next(price * (1 - .30m));
