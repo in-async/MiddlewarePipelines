@@ -1,8 +1,8 @@
-# MiddlewarePipelines
-[![Build status](https://ci.appveyor.com/api/projects/status/yrwpc36qmfpf1k4n/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/middlewarepipelines/branch/master)
-[![NuGet](https://img.shields.io/nuget/v/Inasync.MiddlewarePipelines.svg)](https://www.nuget.org/packages/Inasync.MiddlewarePipelines/)
+# OnionFunc
+[![Build status](https://ci.appveyor.com/api/projects/status/yrwpc36qmfpf1k4n/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/onionfunc/branch/master)
+[![NuGet](https://img.shields.io/nuget/v/Inasync.OnionFunc.svg)](https://www.nuget.org/packages/Inasync.OnionFunc/)
 
-***MiddlewarePipelines*** は、特定のドメインに依存せずに middleware pattern を実装する為のシンプルな .NET ライブラリです。
+***OnionFunc*** は middleware pattern によってパイプラインを構築する為の、非常にシンプルな .NET ヘルパーライブラリです。
 
 
 ## Target Frameworks
@@ -13,34 +13,15 @@
 
 ## Usage
 ```cs
-Func<decimal, Task<decimal>> handler = price => Task.FromResult(price);
-Assert.AreEqual(10_000, handler(10_000).Result);
+Func<int, bool> handler = num => true;
+Assert.AreEqual(true, handler(24));
 
-var middlewares = new MiddlewareFunc<decimal, Task<decimal>>[]{
-    async (price, next) => {
-        Assert.AreEqual(10_000, price);
-
-        var nextPrice = await next(price * (1 - .30m));
-        Assert.AreEqual(2_100, nextPrice);
-        return nextPrice;
-    },
-    async (price, next) => {
-        Assert.AreEqual(7_000, price);
-
-        var nextPrice = await next(price * (1 - .40m));
-        Assert.AreEqual(2_100, nextPrice);
-        return nextPrice;
-    },
-    async (price, next) => {
-        Assert.AreEqual(4_200, price);
-
-        var nextPrice = await next(price * (1 - .50m));
-        Assert.AreEqual(2_100, nextPrice);
-        return nextPrice;
-    },
-};
-Func<decimal, Task<decimal>> pipeline = MiddlewarePipeline.Build(middlewares, handler);
-Assert.AreEqual(2_100, pipeline(10_000).Result);
+Func<int, bool> pipeline = handler
+    .Wear(next => num => (num % 3 == 0) && next(num))
+    .Wear(next => num => (num % 4 == 0) && next(num))
+    ;
+Assert.AreEqual(true, pipeline(24));
+Assert.AreEqual(false, pipeline(30));
 ```
 
 

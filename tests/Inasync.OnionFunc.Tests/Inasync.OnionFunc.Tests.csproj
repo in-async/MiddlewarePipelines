@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Inasync.MiddlewarePipelines\Inasync.MiddlewarePipelines.csproj" />
+    <ProjectReference Include="..\..\src\Inasync.OnionFunc\Inasync.OnionFunc.csproj" />
   </ItemGroup>
 
 </Project>
