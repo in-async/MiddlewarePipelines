@@ -1,5 +1,5 @@
 # OnionFunc
-[![Build status](https://ci.appveyor.com/api/projects/status/yrwpc36qmfpf1k4n/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/onionfunc/branch/master)
+[![Build status](https://ci.appveyor.com/api/projects/status/tlej4ujmt74jf5xe/branch/master?svg=true)](https://ci.appveyor.com/project/inasync/onionfunc/branch/master)
 [![NuGet](https://img.shields.io/nuget/v/Inasync.OnionFunc.svg)](https://www.nuget.org/packages/Inasync.OnionFunc/)
 
 ***OnionFunc*** は middleware pattern によってパイプラインを構築する為の、非常にシンプルな .NET ヘルパーライブラリです。
