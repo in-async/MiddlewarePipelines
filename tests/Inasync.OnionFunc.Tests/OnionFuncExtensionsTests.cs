@@ -10,12 +10,12 @@ namespace Inasync.OnionFunc.Tests {
     public class OnionFuncExtensionsTests {
 
         [TestMethod]
-        public void Wear_ByMiddlewareFunc() {
+        public void Layer() {
             Func<DummyContext, DummyResult> middlewareResult = context => new DummyResult();
 
             Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
                 new TestCaseRunner()
-                    .Run(() => OnionFuncExtensions.Wear(_handler, _middleware?.Delegate))
+                    .Run(() => OnionFuncExtensions.Layer(_handler, _middleware?.Delegate))
                     .Verify((actual, desc) => {
                         Assert.AreEqual(middlewareResult, actual, desc);
                         Assert.AreEqual(_handler, _middleware.ActualNext, desc);
@@ -32,29 +32,7 @@ namespace Inasync.OnionFunc.Tests {
         }
 
         [TestMethod]
-        public void Wear_ByMiddlewareInterface() {
-            Func<DummyContext, DummyResult> middlewareResult = context => new DummyResult();
-
-            Action TestCase(int testNumber, Func<DummyContext, DummyResult> _handler, SpyMiddleware _middleware, Type expectedExceptionType = null) => () => {
-                new TestCaseRunner()
-                    .Run(() => OnionFuncExtensions.Wear(_handler, _middleware))
-                    .Verify((actual, desc) => {
-                        Assert.AreEqual(middlewareResult, actual, desc);
-                        Assert.AreEqual(_handler, _middleware.ActualNext, desc);
-                    }, expectedExceptionType);
-            };
-
-            Func<DummyContext, DummyResult> handler = _ => new DummyResult();
-            var middleware = new SpyMiddleware(middlewareResult);
-            new[]{
-                TestCase( 0, null   , middleware, typeof(ArgumentNullException)),
-                TestCase( 1, handler, null      , typeof(ArgumentNullException)),
-                TestCase( 2, handler, middleware),
-            }.Run();
-        }
-
-        [TestMethod]
-        public void Wears_and_Invoke() {
+        public void Layers_and_Invoke() {
             {
                 var invokedFactories = new List<SpyComponent>();
                 var invokedComponents = new List<SpyComponent>();
@@ -70,9 +48,9 @@ namespace Inasync.OnionFunc.Tests {
 
                 new TestCaseRunner("middlewares 及び handler が順番通りに呼ばれる")
                     .Run(() => new Func<DummyContext, DummyResult>(handler.Invoke)
-                        .Wear(factory1.Create)
-                        .Wear(factory2.Create)
-                        .Wear(factory3.Create)
+                        .Layer(factory1.Create)
+                        .Layer(factory2.Create)
+                        .Layer(factory3.Create)
                     )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
@@ -100,9 +78,9 @@ namespace Inasync.OnionFunc.Tests {
 
                 new TestCaseRunner("middleware2 でショートサーキット")
                     .Run(() => new Func<DummyContext, DummyResult>(handler.Invoke)
-                        .Wear(factory1.Create)
-                        .Wear(factory2.Create)
-                        .Wear(factory3.Create)
+                        .Layer(factory1.Create)
+                        .Layer(factory2.Create)
+                        .Layer(factory3.Create)
                     )
                     .Verify((actual, desc) => {
                         var context = new DummyContext();
@@ -118,18 +96,17 @@ namespace Inasync.OnionFunc.Tests {
 
         #region Helpers
 
-        private sealed class SpyMiddleware : IMiddleware<DummyContext, DummyResult> {
+        private sealed class SpyMiddleware {
             private readonly Func<DummyContext, DummyResult> _result;
 
             public SpyMiddleware(Func<DummyContext, DummyResult> result) => _result = result;
 
-            public MiddlewareFunc<DummyContext, DummyResult> Delegate => Invoke;
             public Func<DummyContext, DummyResult> ActualNext { get; private set; }
 
-            public Func<DummyContext, DummyResult> Invoke(Func<DummyContext, DummyResult> next) {
+            public MiddlewareFunc<DummyContext, DummyResult> Delegate => next => {
                 ActualNext = next;
                 return _result;
-            }
+            };
         }
 
         private class SpyMiddlewareFactory : SpyComponent {

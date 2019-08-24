@@ -16,12 +16,12 @@
 Func<int, bool> handler = num => true;
 Assert.AreEqual(true, handler(24));
 
-Func<int, bool> pipeline = handler
-    .Wear(next => num => (num % 3 == 0) && next(num))
-    .Wear(next => num => (num % 4 == 0) && next(num))
+Func<int, bool> onionFunc = handler
+    .Layer(next => num => (num % 3 == 0) && next(num))
+    .Layer(next => num => (num % 4 == 0) && next(num))
     ;
-Assert.AreEqual(true, pipeline(24));
-Assert.AreEqual(false, pipeline(30));
+Assert.AreEqual(true, onionFunc(24));
+Assert.AreEqual(false, onionFunc(30));
 ```
 
 
